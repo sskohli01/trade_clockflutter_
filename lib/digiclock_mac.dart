@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+//import 'package:flutter_tts/flutter_tts.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -60,6 +61,13 @@ class _MyHomePageState extends State<MyHomePage> {
       //ends at 15:15
       //return 'Close at 3:15 pm';
     }
+    //final sTime = _formatDateTime(nextTick);
+    //final hms = sTime.split(':');
+    //FlutterTts flutterTts = FlutterTts();
+
+    // if (hms[2] == '00') {
+    //   await flutterTts.speak('The time is $sTime');
+    // }
     return nextTick;
     //return DateFormat('hh:mm:ss a').format(nextTick);
   }
@@ -89,6 +97,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final sWidth = MediaQuery.of(context).size.width;
+    bool isScreenWide = sWidth >= 300;
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.only(left: 8.0, top: 8),
@@ -97,15 +108,21 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: 80,
+              height: 100,
               width: 150,
-              child: Text(
-                _formatDateTime(_currentTime, showSecs: true),
-                style: Theme.of(context).textTheme.headline4,
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Text(
+                  _formatDateTime(_currentTime, showSecs: true),
+                  style: Theme.of(context).textTheme.headline4,
+                ),
               ),
             ),
             const SizedBox(width: 30),
-            SizedBox(height: 100, width: 500, child: _tickerList(context)),
+            isScreenWide
+                ? SizedBox(height: 100, width: 500, child: _tickerList(context))
+                : SizedBox(
+                    height: 500, width: sWidth, child: _tickerList(context)),
           ],
         ),
       ),
@@ -113,45 +130,51 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _tickerList(BuildContext context) {
+    bool isScreenWide = MediaQuery.of(context).size.width >= 300;
+
     return ListView.builder(
-      scrollDirection: Axis.horizontal,
+      scrollDirection: isScreenWide ? Axis.horizontal : Axis.vertical,
       itemCount: _ticks.length,
       itemBuilder: (BuildContext context, int index) {
         Tick tick = _ticks[index];
         int tickVal = tick.label;
         return Padding(
-          padding: const EdgeInsets.all(4.0),
+          padding: const EdgeInsets.only(top: 8),
           child: Column(
             children: [
-              Visibility(
-                visible: tick.isVisible,
-                maintainSize: true,
-                maintainAnimation: true,
-                maintainState: true,
-                child: Column(
-                  children: [
-                    Text(
-                      '$tickVal Min',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Column(
+                children: [
+                  IconButton(
+                    padding: const EdgeInsets.only(top: 4, right: 4),
+                    iconSize: 20,
+                    icon: tick.isVisible
+                        ? const Icon(Icons.visibility)
+                        : const Icon(Icons.visibility_off),
+                    onPressed: () {
+                      setState(() {
+                        tick.isVisible = !tick.isVisible;
+                      });
+                    },
+                  ),
+                  Visibility(
+                    visible: tick.isVisible,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: Column(
+                      children: [
+                        Text(
+                          '$tickVal Min',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        _buildCountdown(_getNextTick(tickVal)),
+                      ],
                     ),
-                    _buildCountdown(_getNextTick(tickVal)),
-                  ],
-                ),
-              ),
-              IconButton(
-                padding: const EdgeInsets.only(top: 4, right: 4),
-                iconSize: 20,
-                icon: tick.isVisible
-                    ? const Icon(Icons.visibility)
-                    : const Icon(Icons.visibility_off),
-                onPressed: () {
-                  setState(() {
-                    tick.isVisible = !tick.isVisible;
-                  });
-                },
+                  )
+                ],
               ),
             ],
           ),
@@ -172,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Row(
         children: [
           Text(
-            _formatDateTime(nextTick),
+            _formatDateTime(nextTick, showSecs: false),
             style: const TextStyle(
               fontSize: 15,
             ),
